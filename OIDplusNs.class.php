@@ -139,7 +139,7 @@ class OIDplusNs extends OIDplusObject {
 
 		
 	public function init(bool $html=true) {
-       OIDplusObjectTypePluginNs::webfatInit( );
+      // OIDplusObjectTypePluginNs::webfatInit( );
 	}	
 	
 	public function __construct(string $domain, string $_ns= self::DEFNS, array $attributes = []) {
@@ -581,47 +581,7 @@ class OIDplusNs extends OIDplusObject {
 		$content .= '</div>';
 
 		$content.=<<<HTMLCODE
-<script>
-async function FrdlNsPluginSearch(ns, term, search_title, search_description){			
-  	var CacheKey=(ns+':'+term).toString();
-	if('undefined'!==typeof FrdlNsPluginSearch.cache[CacheKey]){
-		\$("#search_output_frdl_ns_plugin").prepend(FrdlNsPluginSearch.cache[CacheKey]);
-		return;
-	}
-			
-			
-		\$.ajax({
-			url:"ajax.php",
-			method:"POST",
-			beforeSend: function(jqXHR, settings) {
-				\$.xhrPool.abortAll();
-				\$.xhrPool.add(jqXHR);
-			},
-			complete: function(jqXHR, text) {
-				\$.xhrPool.remove(jqXHR);
-			},
-			data: {
-				csrf_token:csrf_token,
-				plugin: OIDplusPagePublicSearch.oid,
-				action:"search",
-				namespace: ns,
-				term: term,
-				search_title: search_title || 0,
-				search_description: search_description || 0,
-				search_asn1id: 1,
-				search_iri: 1
-			},
-			error: oidplus_ajax_error,
-			success: function (data) {
-				oidplus_ajax_success(data, function (data) {
-					FrdlNsPluginSearch.cache[CacheKey]=data.output;
-					\$("#search_output_frdl_ns_plugin").prepend(FrdlNsPluginSearch.cache[CacheKey]);
-				});
-			}
-		});	
- 
-}
-FrdlNsPluginSearch.cache={};		
+<script>	
 \$(document).ready(async ()=>{	
 	FrdlNsPluginSearch("$ns", "$id");
 	FrdlNsPluginSearch("%", "$id");
