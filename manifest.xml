@@ -18,5 +18,8 @@
 	<php>
 		<mainclass>Frdlweb\OIDplus\OIDplusObjectTypePluginNs</mainclass>
 	</php>
-	
+		
+	<js>
+		<file>OIDplusObjectTypePluginNs.js</file>
+	</js>
 </manifest>
