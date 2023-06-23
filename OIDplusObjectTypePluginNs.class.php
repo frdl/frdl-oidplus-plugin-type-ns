@@ -45,7 +45,7 @@ class OIDplusObjectTypePluginNs extends \ViaThinkSoft\OIDPlus\OIDplusObjectTypeP
 			  $loader->addNamespace(OIDplusNs::CLASS_TYPES_BASE_NS_GENERATED,
 						   __DIR__.\DIRECTORY_SEPARATOR.'.generated'.\DIRECTORY_SEPARATOR.'object-type-classes',
 						   false);
-		     $loader->register(false) ;		
+		     $loader->register(true) ;		
 		}
 		
 		
