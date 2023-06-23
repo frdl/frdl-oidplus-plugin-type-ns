@@ -1,5 +1,5 @@
 $(document).ready(async ()=>{	
-var t = false;
+var t = false, observerSet = false;
 function f(){
  setTimeout(async ()=>{
   
@@ -8,14 +8,16 @@ function f(){
 	  t=setTimeout(f,450);
 	  return;
   }
-	 
+	
+ if(!observerSet){
+	observerSet = true;
 	(await require('frdlweb')).Webfan.EventEmitter.DEFAULT.on('mutation-observer', EventData=>{
 		var {name, data} = EventData;
 		if(data.changed.document || data.changed.location){
 			 f();
 		}
 	});
-	 
+ }	 
 	 
  (async(table)=>{
   if(null===table){
