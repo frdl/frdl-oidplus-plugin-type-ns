@@ -30,34 +30,35 @@ use Webfan\Autoload\LocalPsr4Autoloader;
 class OIDplusObjectTypePluginNs extends \ViaThinkSoft\OIDPlus\OIDplusObjectTypePlugin {
 
 	protected static $instance = null;
+	protected static $StubRunner = null;
 	protected static $autoloaderRegistered=false;
-	public static function webfatInit( ) {
- 			
-
+	
+	
+	public static function webfatInit( ) {	
 		
 		
-		$io4plugin = OIDplus::getPluginByOid('1.3.6.1.4.1.37476.9000.108.19361.24196');			
-		if (!$io4plugin) throw new OIDplusException(_L("Plugin 1.3.6.1.4.1.37476.9000.108.19361.24196 missing in ".__CLASS__), null, 404);           	$io4plugin->getApp();
+		if(null === self::$instance){
+		     $io4plugin = OIDplus::getPluginByOid('1.3.6.1.4.1.37476.9000.108.19361.24196');			
+         	     if (!$io4plugin) throw new OIDplusException(_L("Plugin 1.3.6.1.4.1.37476.9000.108.19361.24196 missing in ".__CLASS__), null, 404);               $io4plugin->getWebfat(true, false);
+	             $io4plugin->getWebfat(true, false);
 			
-		if(!self::$autoloaderRegistered){
-		  self::$autoloaderRegistered=true;	
+		  if(!self::$autoloaderRegistered){
+		      self::$autoloaderRegistered=true;	
 			  $loader = new \Webfan\Autoload\LocalPsr4Autoloader; 
 			  $loader->addNamespace(OIDplusNs::CLASS_TYPES_BASE_NS_GENERATED,
 						   __DIR__.\DIRECTORY_SEPARATOR.'.generated'.\DIRECTORY_SEPARATOR.'object-type-classes',
 						   false);
 		     $loader->register(true) ;		
-		}
-		
-		
-		
-		if(null === self::$instance){
+		 }
+				
+			
 		   self::$instance = new OIDplusNs(OIDplusNs::root(), OIDplusNs::ns(), ['ns'=>OIDplusNs::ns(),]);	
 		}
 		return self::$instance;
 	}
 
 	public function init(bool $html=true) {
-       self::webfatInit( );
+    //  self::webfatInit( );
 	}	
 	
 	
@@ -68,11 +69,11 @@ class OIDplusObjectTypePluginNs extends \ViaThinkSoft\OIDPlus\OIDplusObjectTypeP
 		self::webfatInit( );
 		return OIDplusNs::class;
 	}
-
+	/**
 	public function registerAutoloading(){
 	    self::webfatInit( );
 	}
-	/**
+
 	 * @param string $static_node_id
 	 * @param bool $throw_exception
 	 * @return string
