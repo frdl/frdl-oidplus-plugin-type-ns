@@ -88,9 +88,9 @@ class OIDplusNs extends OIDplusObject {
       // OIDplusObjectTypePluginNs::webfatInit( );
 	}	
 	
-	public function __construct(string $domain, ?string $_ns= self::DEFNS, array $attributes = []) {
+	public function __construct(string $domain, ?string $_ns= null, array $attributes = []) {
 		$attrDomain = self::getValidClassConfig($domain);
-		$_ns = $_ns ?: ($attrDomain['namespace'] ?: explode(':', $domain,2)[0]);
+		$_ns = $_ns ?: ($attrDomain['namespace'] ?: explode(':', self::$_ns.':'.$domain )[0]);
 		$attrNS = self::getValidClassConfig($_ns);
 		$attr = self::getValidClassConfig($_ns.':'.$domain);
 		if (!is_array($attrDomain)
@@ -102,7 +102,7 @@ class OIDplusNs extends OIDplusObject {
 		}
 		// TODO: syntax checks
 		$this->domain = $this->oid = $domain;
-	    self::$_ns = $_ns;
+	    self::$_ns = $_ns ?: self::$_ns;
 		//foreach($attributes as $k=>$v){
 		//	if(is_numeric($k))unset($attributes[$k]);
 		//}
@@ -115,7 +115,7 @@ class OIDplusNs extends OIDplusObject {
 	public static function getValidClassConfig($ns_or_id){
 		foreach(self::getNamespacesPatterns() as $namespaceId => $dis){
 			if(preg_match('/^(?<identifier>'.$dis['regex'].')$/', $ns_or_id, $match)){
-				$match['ns'] = (isset($match['ns'])) ? $match['ns'] : $match['identifier'];   
+				$match['ns'] = (isset($match['ns'])) ? $match['ns'] :explode(':', $ns_or_id, 2)[0];   
 				\Frdlweb\OIDplus\OIDplusNs::$namespaces[$match['ns']]['definitions'] = $dis;
 			    $match['ns'] = \call_user_func_array(isset($dis['getNamespace'])
 												    ? $dis['getNamespace']
@@ -200,11 +200,24 @@ class OIDplusNs extends OIDplusObject {
  
 		
 		  $ns = is_array($match) 
-			          && $parentObject->isRoot()					 
+			          && $parentObject->isRoot() 		 
 					  &&  OIDplusNs::DEFNS === $parentObject::ns() 
 					  ? $match['ns'] : $parentObject::ns();
 		
-		 $newObject = new self($ns.':'.$newId, $ns, $match ?: ($matchLocalArcs ?: []) )  ;
+	
+		
+		if($parentObject::ns() === $ns && $newId === $ns.':'.$ns && is_array($matchLocalArcs) 
+		   && @$matchLocalArcs['ns'] === @$matchLocalArcs['identifier']
+		 //  && !empty($arcs) && $arcs === @$matchLocalArcs['ns'] && $newId === $ns.':'.$arcs
+		   ){
+			//$newObject = new \Frdlweb\OIDplus\OIDplusNs::$namespaces[$ns]['class']('', $ns, $match ?: ($matchLocalArcs ?: []) )  ;
+			$newObject = new \Frdlweb\OIDplus\OIDplusNs::$namespaces[$ns]['class']($ns.':', $ns, $match ?: ($matchLocalArcs ?: []) )  ;
+		}else{
+			 $newObject = new \Frdlweb\OIDplus\OIDplusNs::$namespaces[$ns]['class']($newId, $ns, $match ?: ($matchLocalArcs ?: []) )  ;
+		}
+		 
+		
+		
 		
 		 //if ($relativeObject && $parentObject->isRoot() &&  OIDplusNs::DEFNS === $parentObject::ns() 
 		 //	&& is_array($matchLocalArcs) 
@@ -237,14 +250,14 @@ class OIDplusNs extends OIDplusObject {
 		
 		if (count($pathNodes)>1) {
 			//$oid_up = substr($oid, $p+1);
-			return OIDplusObject::parse($class::ns().':'.implode($class::DELIMITER,$pathNodes));
+			return OIDplusObject::parse( $this->getParent()->ns().':'.implode($class::DELIMITER,$pathNodes));
 		}
 		
 	//	if ( $this->isRoot() ) return $class::parse($class::root());
 
 		//$oid_up = substr($oid, $p+1);
 
-		return OIDplusObject::parse($class::ns().':'.implode($class::DELIMITER,$pathNodes));
+		return OIDplusObject::parse( $this->getParent()->ns().':'.implode($class::DELIMITER,$pathNodes));
 	} 
 	
 	public function getParent() {
@@ -292,12 +305,12 @@ class OIDplusNs extends OIDplusObject {
 		//@ToDO cache plugin
 	/*	return OIDplusObject::buildObjectInformationCache();*/
 		
-		$id = $id ?: '';
+		$id = $id ?: self::root();
 		
 		if (is_null(OIDplusObject::$object_info_cache)) {
 			OIDplusObject::$object_info_cache = array();
 		//	$res = OIDplus::db()->query("select * from ###objects where `id` = ? or `id` LIKE ? or `parent` LIKE ?");
-			$res = OIDplus::db()->query("select * from ###objects where `id` = ? or `id` LIKE ? or `parent` LIKE ?");
+			$res = OIDplus::db()->query("select * from ###objects where `id` = '?' or `id` LIKE '?' or `parent` LIKE '?'");
 			while ($row = $res->fetch_array([$id, '%'.$id.'%', $id.'%'])) {
 				OIDplusObject::$object_info_cache[$row['id']] = $row;
 			}
@@ -797,9 +810,10 @@ HTMLCODE;
 	
 	
 	public function getAltIds(): array {
-		return array();
-		//if ($this->isRoot()) return array();
-		//$a = $this->_original_oid_getAltIds();
+		//return array();
+		if ($this->isRoot()) return array();
+		$a = $this->_original_oid_getAltIds();
+		return $a;
 		/*
 		if('~:' !== substr($this->nodeId(),0,2) ){
 			$a = array_merge($a, [
@@ -833,8 +847,9 @@ HTMLCODE;
 		   && \get_class($this->serviceObject) !== \get_class($this) && is_callable([$this->serviceObject,'getAltIds']) 
 		   && true !== $this->serviceObject instanceof OIDplusNs){
 			$a = array_merge($a, $this->serviceObject->getAltIds());
-		}*/
+		}
 		return $a;
+		*/
 	}
 	public function _original_oid_getAltIds(): array {
 		if ($this->isRoot()) return array();
