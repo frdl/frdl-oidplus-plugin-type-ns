@@ -18,12 +18,9 @@
     "extra" : {
         "installer-name" : "ns"
     },
-  "repositories": [{
-    "type": "composer",
-    "url": "https://weid.repo.pkg.frdl.de"
-  }],
   "require": {
-    "php": ">=7.2|>=8.1"
+    "php": ">=7.2|>=8.1",
+    "frdl/oidplus-io4-bridge-plugin" : "*"
   },
   "require-dev": {
    
