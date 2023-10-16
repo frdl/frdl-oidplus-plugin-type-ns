@@ -310,7 +310,8 @@ class OIDplusNs extends OIDplusObject {
 		if (is_null(OIDplusObject::$object_info_cache)) {
 			OIDplusObject::$object_info_cache = array();
 		//	$res = OIDplus::db()->query("select * from ###objects where `id` = ? or `id` LIKE ? or `parent` LIKE ?");
-			$res = OIDplus::db()->query("select * from ###objects where `id` = '?' or `id` LIKE '?' or `parent` LIKE '?'");
+		//	$res = OIDplus::db()->query("select * from ###objects where `id` = '?' or `id` LIKE '?' or `parent` LIKE '?'");
+			$res = OIDplus::db()->query("select * from ###objects");
 			while ($row = $res->fetch_array([$id, '%'.$id.'%', $id.'%'])) {
 				OIDplusObject::$object_info_cache[$row['id']] = $row;
 			}
