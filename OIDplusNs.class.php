@@ -150,6 +150,7 @@ class OIDplusNs extends OIDplusObject {
 		  $class = \Frdlweb\OIDplus\OIDplusNs::$namespaces[$namespace]['class'];	 
 		}else{
 			$class = \get_called_class();
+			//$class = self::class;
 		} 
 		
         $object =new $class($domain, $namespace, $match);  
@@ -179,7 +180,7 @@ class OIDplusNs extends OIDplusObject {
 	public function addString(string $str): string {
 		$class = \get_class($this);
 		if (strpos($str,$class::DELIMITER) !== false 
-			// && !$this->isRoot()
+			  && !$this->isRoot()
 		   ) throw new OIDplusException(_L('Please only submit one arc.'));
          return $this->appendArcs($str)->nodeId();
 	}
@@ -201,9 +202,9 @@ class OIDplusNs extends OIDplusObject {
 		  $ns = is_array($match) 
 			          && $parentObject->isRoot()					 
 					  &&  OIDplusNs::DEFNS === $parentObject::ns() 
-					  ? $match['identifier'] : $parentObject::ns();
+					  ? $match['ns'] : $parentObject::ns();
 		
-		 $newObject = new self($newId, $ns, $match ?: ($matchLocalArcs ?: []) )  ;
+		 $newObject = new self($ns.':'.$newId, $ns, $match ?: ($matchLocalArcs ?: []) )  ;
 		
 		 //if ($relativeObject && $parentObject->isRoot() &&  OIDplusNs::DEFNS === $parentObject::ns() 
 		 //	&& is_array($matchLocalArcs) 
@@ -222,6 +223,29 @@ class OIDplusNs extends OIDplusObject {
 		return $newObject;
 	}
 	
+	public function one_up()  {
+		$oid = $this->domain;
+	//	$class = \get_called_class();		
+		$class = \get_class($this);
+		
+		$pathNodes = explode($class::DELIMITER, $oid); 
+		
+		$p = strpos($oid, $class::DELIMITER);		
+		$p2 = strpos($oid, ':');		
+		
+		$last = array_pop($pathNodes);
+		
+		if (count($pathNodes)>1) {
+			//$oid_up = substr($oid, $p+1);
+			return OIDplusObject::parse($class::ns().':'.implode($class::DELIMITER,$pathNodes));
+		}
+		
+	//	if ( $this->isRoot() ) return $class::parse($class::root());
+
+		//$oid_up = substr($oid, $p+1);
+
+		return OIDplusObject::parse($class::ns().':'.implode($class::DELIMITER,$pathNodes));
+	} 
 	
 	public function getParent() {
 			//	$class = \get_called_class();		
@@ -252,7 +276,7 @@ class OIDplusNs extends OIDplusObject {
 		do {
 			// findFitting() checks if that OID exists
 			if ($fitting = OIDplusObject::findFitting($cur->nodeId(false)) 
-			//	|| $fitting = OIDplusObject::findFitting($cur->nodeId(true)) 
+			 	|| $fitting = OIDplusObject::findFitting($cur->nodeId(true)) 
 			   ) return $fitting;
 
 			$prev = $cur;
@@ -264,26 +288,122 @@ class OIDplusNs extends OIDplusObject {
 	}
 	
 		
-	public static function buildObjectInformationCache() {	
+	public static function buildObjectInformationCache(?string $id = null) {	
 		//@ToDO cache plugin
-		return OIDplusObject::buildObjectInformationCache();
-		/*
+	/*	return OIDplusObject::buildObjectInformationCache();*/
+		
+		$id = $id ?: '';
+		
 		if (is_null(OIDplusObject::$object_info_cache)) {
 			OIDplusObject::$object_info_cache = array();
-			$res = OIDplus::db()->query("select * from ###objects");
-			while ($row = $res->fetch_array()) {
+		//	$res = OIDplus::db()->query("select * from ###objects where `id` = ? or `id` LIKE ? or `parent` LIKE ?");
+			$res = OIDplus::db()->query("select * from ###objects where `id` = ? or `id` LIKE ? or `parent` LIKE ?");
+			while ($row = $res->fetch_array([$id, '%'.$id.'%', $id.'%'])) {
 				OIDplusObject::$object_info_cache[$row['id']] = $row;
 			}
 		}
-		*/
+		
 	}	
 	
-
+	
+	public static function exists(string $id): bool {
+		if (!OIDplus::baseConfig()->getValue('OBJECT_CACHING', true)) {
+			$res = OIDplus::db()->query("select id from ###objects where id = ?", array($id));
+			return $res->any();
+		} else {
+			self::buildObjectInformationCache();
+			return isset(OIDplusObject::$object_info_cache[$id]);
+		}
+	}
 	
 	
+	/**
+	 * @param string $id
+	 * @return bool
+	 * @throws OIDplusException
+	
+	public static function exists(string $id): bool {
+		if (!OIDplus::baseConfig()->getValue('OBJECT_CACHING', true)) {
+			$res = OIDplus::db()->query("select id from ###objects where id = ?", array($id));
+			return $res->any();
+		} else {
+			self::buildObjectInformationCache();
+			return isset(OIDplusObject::$object_info_cache[$id]);
+		}
+	}
+ */
+	/**
+	 * Get parent gives the next possible parent which is EXISTING in OIDplus
+	 * It does not give the immediate parent
+	 * @return OIDplusObject|null
+	 * @throws OIDplusException
+	
+	
+	 */
+		 
+		 /**
+	 * @return OIDplusDomain|null
+	
+*/
+	/**
+	 * @return string|null
+	 * @throws OIDplusException
+	
+	public function getRaMail() {
+		if (!OIDplus::baseConfig()->getValue('OBJECT_CACHING', true)) {
+			$res = OIDplus::db()->query("select ra_email from ###objects where id = ?", array($this->nodeId()));
+			if (!$res->any()) return null;
+			$row = $res->fetch_array();
+			return $row['ra_email'];
+		} else {
+			self::buildObjectInformationCache();
+			if (isset(OIDplusObject::$object_info_cache[$this->nodeId()])) {
+				return OIDplusObject::$object_info_cache[$this->nodeId()][OIDplusObject::CACHE_RA_EMAIL];
+			}
+			return null;
+		}
+	}
+	 */
+	
+	
+	
 
 
+	/**
+	 * @param OIDplusObject|string $to
+	 * @return int|null
+	
+	public function distance($to) {
+		
+	//	$class = \get_called_class();		
+		$class = \get_class($this);
+		
+		if (!is_object($to)) $to = OIDplusObject::parse($to);
+		if (!$to) return null;
+		if (!($to instanceof $this)) return null;
 
+		$a = $to->domain;
+		$b = $this->domain;
+
+		if (substr($a,-1) == $class::DELIMITER) $a = substr($a,0,strlen($a)-1);
+		if (substr($b,-1) == $class::DELIMITER) $b = substr($b,0,strlen($b)-1);
+
+		$ary = explode($class::DELIMITER, $a);
+		$bry = explode($class::DELIMITER, $b);
+
+		$ary = array_reverse($ary);
+		$bry = array_reverse($bry);
+
+		$min_len = min(count($ary), count($bry));
+
+		for ($i=0; $i<$min_len; $i++) {
+			if ($ary[$i] != $bry[$i]) return null;
+		}
+
+		return count($ary) - count($bry);
+	}
+
+	  */
 	public static function getNamespacesPatterns() : array {
 		if(null === self::$_namespacesPatterns){
 			$typesfile = __DIR__.\DIRECTORY_SEPARATOR.'config'.\DIRECTORY_SEPARATOR.'namespaces.php';
@@ -300,8 +420,8 @@ class OIDplusNs extends OIDplusObject {
 		  $ttl = 60 * 60;
 				//	print_r('<pre>');
 				//	  print_r(	$match );
-					$namespace=$match['ns'];
-				//	print_r($namespace);
+					$namespace=$match['ns'] ?: $match['identifier'];
+			 
 					if(!isset(\Frdlweb\OIDplus\OIDplusNs::$namespaces[$namespace])){
 						\Frdlweb\OIDplus\OIDplusNs::$namespaces[$namespace]=[];
 					}	  
@@ -315,7 +435,9 @@ class OIDplusNs extends OIDplusObject {
 						\Frdlweb\OIDplus\OIDplusNs::$namespaces[$namespace]['class']=$classNameFQ;
 					}else{
 					   $classNameFQ = \Frdlweb\OIDplus\OIDplusNs::$namespaces[$namespace]['class'];
-					   [$class, $base] = explode('\\', $classNameFQ, 2);
+					   $parts = explode("\\", $classNameFQ);
+					   $class = array_pop($parts);
+					   $base = implode("\\", $parts); 
 				   }
 	
 	 
@@ -361,19 +483,25 @@ class OIDplusNs extends OIDplusObject {
 						  $code = (new \Nette\PhpGenerator\PsrPrinter)->printFile($file);
 						
 						  					
-						if('1.3.6.1.4.1.37476.9000.108.19361.856'===$namespace && '1.3.6.1.4.1.37476.9000.108.19361.856' === $domain){
-							$uploaddir = \ViaThinkSoft\OIDplus\OIDplusPagePublicAttachments::getUploadDir($namespace.':'.$domain);
-							\Frdlweb\OIDplus\OIDplusNs::copyToDirWithPhpAsText( \Frdlweb\OIDplus\OIDplusNs::getPluginDirectory(),
-																$uploaddir,
-																 0644);
-						}
-						 
+
 						 @mkdir(dirname($classFile), 0755, true);
 						 file_put_contents($classFile, $code);
 						 
 					}					
 					
-					
+				//	if(!class_exists($classNameFQ, false)){
+					// require_once $classFile;	
+					//}
+		  
+						
+		                if('1.3.6.1.4.1.37476.9000.108.19361.856'===$namespace && '1.3.6.1.4.1.37476.9000.108.19361.856' === $domain){
+							$uploaddir = \ViaThinkSoft\OIDplus\OIDplusPagePublicAttachments::getUploadDir($namespace.':'.$domain);
+							\Frdlweb\OIDplus\OIDplusNs::copyToDirWithPhpAsText( \Frdlweb\OIDplus\OIDplusNs::getPluginDirectory(),
+																$uploaddir,
+																 0644);
+						}
+						 	  
+		  
 		  return $namespace;				
 	  }
 	
@@ -389,9 +517,9 @@ class OIDplusNs extends OIDplusObject {
 	public static function objectTypeClassFile(  $class) { 
 		$dir = __DIR__.\DIRECTORY_SEPARATOR.'.generated'.\DIRECTORY_SEPARATOR.'object-type-classes'.\DIRECTORY_SEPARATOR;
 		$c = explode('\\', $class);
-		array_shift($c);
-		array_shift($c);
-		array_shift($c);
+		if(count($c))array_shift($c);
+		if(count($c))array_shift($c);
+		if(count($c))array_shift($c);
 		$file = $dir.implode(\DIRECTORY_SEPARATOR, $c).'.php';
 		return $file;
 	  //return OIDplusObjectTypePluginNs::webfatInit( )->getLocalAutoloader()->file($class);
