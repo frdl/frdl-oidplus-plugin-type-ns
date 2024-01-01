@@ -88,7 +88,7 @@ class OIDplusNs extends OIDplusObject {
       // OIDplusObjectTypePluginNs::webfatInit( );
 	}	
 	
-	public function __construct(string $domain, ?string $_ns= null, array $attributes = []) {
+	public function __construct(string $domain, string $_ns= null, array $attributes = []) {
 		$attrDomain = self::getValidClassConfig($domain);
 		$_ns = $_ns ?: ($attrDomain['namespace'] ?: explode(':', self::$_ns.':'.$domain )[0]);
 		$attrNS = self::getValidClassConfig($_ns);
